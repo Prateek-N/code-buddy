@@ -1,60 +1,65 @@
-# ⚡ Interview Code Narrator
+# ⚡ Interview Code Narrator v2
 
-**Interview Code Narrator** is a fully static, 100% client-side web application designed to help developers rehearse and prepare for live coding interviews (like Data Structures & Algorithms rounds).
+**Interview Code Narrator** is a fully static, 100% client-side web application designed to help developers rehearse and prepare for live coding interviews (like Data Structures & Algorithms rounds on LeetCode or HackerRank).
 
-Instead of silently typing out 50 lines of code, this tool transforms raw code into an **interactive interview narrative**, giving you a step-by-step game plan on what to say, where to pause, and how to prove to the interviewer that you are a pragmatic, methodical engineer.
+Instead of silently writing a wall of code, this tool transforms raw code into an **interactive interview narrative**. It gives you a step-by-step game plan on what to say, where to pause, and how to prove to the interviewer that you are a pragmatic, methodical engineer.
 
 ---
 
-## 🎯 What We Built
+## 🚀 Use Cases
+* **Mock Interviews:** Rehearse talking aloud while typing to build muscle memory.
+* **Algorithm Studying:** Instead of just memorizing the code, use the generated *Doc Print* to memorize the *logic flow* and the edge cases.
+* **Coaching & Mentoring:** Use the generated *Speaker Notes* to teach juniors how to articulate decisions like choosing a HashMap vs. an Array.
 
-We built a **zero backend, no-API** heuristic engine housed entirely within `index.html`, `styles.css`, and `app.js`.
+---
 
-The user pastes their raw algorithm (in Python, Java, JS, C++, or Go) into the editor. The application instantly processes it and generates 5 distinct, interview-optimized outputs:
+## 🎯 Core Features (v2 Upgrades)
 
 1. **Clean Code (✅):** Polished, formatted code ready for the interview.
 2. **Doc Print (📝):** The core code organically merged with full-sentence "Speaker Notes" as block comments right above the relevant lines.
-3. **Speaker Notes (🗣️):** A line-by-line script of natural phrases to say while typing (e.g., *"I'll iterate through the collection exactly once to maintain O(N) complexity"* instead of *"Here is a for loop"*).
-4. **Debug Print (🐛):** The original code injected with strategic `print()` / `console.log()` statements at high-value checkpoints (like conditional checks and DP transitions) to make the live coding look highly test-driven.
-5. **Teleprompter (👁️):** Hidden, private coaching tips that live off-screen. It warns you about edge cases and prompts you to mention Big-O complexity requirements.
+3. **Speaker Notes (🗣️):** A line-by-line script of natural phrases to say while typing. **(v2: Now features rotating phrase banks so you don't sound like a robot during repetitive logic!)**
+4. **Debug Print (🐛):** The original code injected with strategic `print()` / `console.log()` statements at high-value checkpoints to make the live coding look highly test-driven.
+5. **Teleprompter (👁️):** Hidden, private coaching tips that live off-screen. Warns about edge cases and prompts you to mention Big-O complexity.
 
-Finally, the app calculates a **Natural Typing Flow**—suggesting the psychological order in which you should type the solution to maximize the interviewer's comprehension.
+### 🔥 Exclusive v2 Additions
+* **10 Language Support:** Python, Java, JavaScript, TypeScript, C++, Go, Rust, Kotlin, Swift, and Ruby.
+* **Confidence Badge:** A dynamic UI badge reflecting the engine's confidence level (0-100%) when automatically guessing the programming language via heuristics.
+* **Problem Statement Integration:** A dedicated input field to paste the original problem statement, which the engine weaves into the opening narration.
+* **Keyboard Navigation:** Rapid tab switching via `Ctrl+1` through `Ctrl+5`.
 
 ---
 
-## ⚙️ How It Works (Technical Breakdown)
+## ⚙️ How It Works (Technical Architecture)
 
-### 1. The Heuristic Scoring Engine (Language Detection)
+### 1. Extended Language Fingerprinting (Zero-API Detection)
 Auto-detecting code snippets is notoriously difficult client-side without heavy machine learning models. We built a custom **Keyword Fingerprinting Engine**. 
-When code is pasted, the app scans for language-specific syntactic flags:
-* `def `, `print(`, `elif` → Python
+When code is pasted, the app assigns "weights" to language-specific syntax:
+* `def `, `print(`, `elif` → Python (+8 weight)
 * `public static`, `System.out` → Java
-* `console.log`, `===` → JavaScript
-* `#include`, `cout` → C++
+* `go func`, `:=`, `chan` → Go
+* `fn `, `let mut`, `match` → Rust
 
-The language with the highest score dynamically changes the syntax parser and the UI Dropdown. If the engine guesses wrong, the user can manually override it via the dropdown.
+The highest overall score dynamically determines the language and updates the **Confidence Badge**. If it dips below a threshold, the app safely falls back.
 
 ### 2. Regex-Based Code Analyzer (The Brain)
-The heart of the app is the `analyzeLine(line, index)` function. It parses the plain text line-by-line and categorizes the intent of the code without using a heavy AST (Abstract Syntax Tree):
-* **`func`**: Detects function signatures and captures inputs.
-* **`init`**: Detects HashMaps, Lists, and Dictionaries being instantiated for state tracking.
-* **`loop`**: Detects `for` and `while` logic boundaries.
-* **`dp`**: Detects arrays or maps being mutated (e.g., `seen[num] = i`).
-* **`cond` & `ret`**: Detects condition branching and recursion base cases.
+The engine parses plain text line-by-line and categorizes the intent without a heavy AST (Abstract Syntax Tree). The v2 Engine is incredibly robust:
+* **`func` & `classdef`**: Detects function signatures / classes and extracts variable names for context.
+* **`init`**: Detects HashMaps, Lists, and Sets being instantiated for state tracking.
+* **`loop`**: Detects bounds and iterations.
+* **`dp`**: Detects array/map mutations (e.g., `seen[num] = i`).
+* **`rec` & `trycatch`**: Safely identifies recursion boundaries and defensive error handling blocks.
 
-### 3. Dynamic Narrative Builder
-Once the lines are categorized, a massive `switch` statement maps the code semantics to **time estimates, edge cases, and humanized dialogue**. 
-For example, if it detects `dp` (Array mutation), the Teleprompter injects: *"This is the core logic. Type it slowly. Name variables descriptively."*
+### 3. Dynamic Narrative Builder with Phrase Rotation
+Once lines are categorized, a lookup maps semantics to **time estimates, edge cases, and humanized dialogue**. 
+To prevent the generated speech from sounding repetitive, v2 introduced a **`pickPhrase()` round-robin rotation**. For instance, a loop might say *"I'll iterate through exactly once"*, and the next loop will seamlessly say *"A single traversal handles this"*.
 
 ### 4. "Smart Paste" Rich Text Clipboard Engine
-By default, web browsers copy text in pure Black & White. We wanted developers to be able to copy the **Doc Print** and paste it directly into MS Word, Google Docs, or Notion while preserving the beautiful Markdown-style syntax highlighting.
-
-We intercepted the native `Copy` button logic and rewrote it using the unified `ClipboardItem` API:
-* When "Copy" is clicked, the app clones the code block invisibly.
+When copying code to Microsoft Word, Google Docs, or Notion, browsers generally strip the background colors, resulting in invisible white text.
+We intercepted the native `Copy` button logic and rewrote it using the `ClipboardItem` API. 
 * It scans every inner `<span>` assigned by `highlight.js`.
-* It runs a **Universal Regex Map** against the syntax classes (`hljs-keyword`, `hljs-string`, `hljs-comment`).
-* It explicitly forces precise, pristine GitHub Light Hex Colors directly into the HTML tree (e.g., `#cf222e` for keywords, `#57606a` for comments).
-* It packages this as `text/html` and overrides the system clipboard, guaranteeing perfect syntax highlights anywhere it is pasted.
+* It assigns a **Universal Regex Map** against the syntax classes (`hljs-keyword`, `hljs-string`).
+* It explicitly forces a 100% pristine GitHub Light Hex Color Palette into the HTML tree (e.g., `#cf222e` for keywords, `#57606a` for comments).
+* It guarantees perfect, vibrant syntax highlights upon clipboard paste, ignoring the web-app's dark mode state.
 
 ### 5. Vanilla UI/UX
-The UI uses a **Dark-First, Custom CSS Design System** drawing inspiration from IDEs like VS Code and GitHub Dark. Animations use hardware-accelerated CSS keyframes, and states are managed silently through JavaScript so the application feels instant.
+The UI uses a **Dark-First, Custom CSS Design System** drawing inspiration from IDEs like VS Code. Heavy use of flexbox, hardware-accelerated CSS keyframe animations, and DOM manipulation entirely within Vanilla JS ensures a zero-latency feel.
